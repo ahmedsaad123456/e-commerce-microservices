@@ -1,0 +1,41 @@
+
+# Name of the GitHub Actions workflow
+name: customer-service
+
+# Define when this workflow should run
+on:
+  # Run when changes are pushed to the specified paths
+  push:
+    paths:
+      - "customer-service/**"
+      - ".github/workflows/customer-service.yml"
+
+  # Run when a Pull Request contains changes to the specified paths
+  pull_request:
+    paths:
+      - "customer-service/**"
+
+jobs:
+  build:
+    # Use the latest Ubuntu runner provided by GitHub
+    runs-on: ubuntu-latest
+
+    # Execute all run commands inside the customer-service directory
+    defaults:
+      run:
+        working-directory: customer-service
+
+    steps:
+      # Check out the repository code
+      - uses: actions/checkout@v4
+
+      # Set up JDK 21 and cache Maven dependencies to speed up builds
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      # Build the application and run all verification tests
+      - name: Build and test
+        run: ./mvnw -B verify
