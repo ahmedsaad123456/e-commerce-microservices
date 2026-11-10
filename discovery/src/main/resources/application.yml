@@ -1,0 +1,13 @@
+# ---------------------------------------------------------------
+# "Bootstrap" file: only tells the app WHO it is and WHERE the Config Server is.
+# Everything else (port, eureka settings) comes from discovery-service.yml
+# stored inside the Config Server.
+# ---------------------------------------------------------------
+spring:
+  config:
+    # Load extra configuration from a Config Server at this URL.
+    # "config-server" is the Docker Compose service name (Docker DNS resolves it).
+    # "optional:" = the app still starts if the Config Server is unreachable.
+    import: optional:configserver:http://config-server:8888
+  application:                            # Settings describing this application
+    name: discovery-service

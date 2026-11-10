@@ -1,0 +1,17 @@
+# ---------------------------------------------------------------
+# Served by the Config Server to the app named "discovery-service".
+# This is the Eureka SERVER (the "phone book" of services).
+# ---------------------------------------------------------------
+eureka:
+  instance:
+    hostname: eureka-server               # Host name of this server (same as the compose service name)
+  client:
+    registerWithEureka: false             # Do NOT register this server in itself (it is the registry, not a client)
+    fetchRegistry: false                  # Do NOT download the registry from another Eureka
+    serviceUrl:                           # Where the Eureka client looks for servers
+      # Address of this Eureka server. ${...} placeholders are filled from the
+      # properties above and below: http://eureka-server:8761/eureka/
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+
+server:
+  port: 8761                              # Port Eureka listens on (must match compose "8761:8761")

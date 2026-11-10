@@ -1,0 +1,21 @@
+# ---------------------------------------------------------------
+# Settings of the Config Server application itself.
+# It does NOT fetch config from anyone: it is the source of config for others.
+# ---------------------------------------------------------------
+server:
+  port: 8888                              # Port the Config Server listens on (must match compose "8888:8888")
+spring:
+  profiles:
+    # "native" = read config files from the local file system / classpath
+    # instead of a Git repository.
+    active: native
+  application:
+    name: config-server
+  cloud:
+    config:
+      server:
+        native:
+          # Folder (inside the jar) that holds the files to serve, e.g.
+          # customer-service.yml and discovery-service.yml.
+          # Real path: config-server/src/main/resources/configurations/
+          search-locations: classpath:/configurations

@@ -1,0 +1,152 @@
+# ---------------------------------------------------------------
+# docker-compose.yaml
+# Describes HOW to build and run all containers (infrastructure level):
+# images, ports, networks, startup order, env variables, volumes.
+# It does not contain application logic settings (those are in Config Server).
+# ---------------------------------------------------------------
+services:                                 # List of containers to run
+
+  config-server:                          # Service name = DNS name other containers use ("config-server")
+    build: ./config-server
+    ports:                                # Publish ports: "HOST:CONTAINER"
+      - "8888:8888"                       # localhost:8888 on your PC -> port 8888 in the container
+    networks:                             # Networks this container joins
+      - microservices-net                 # Shared network so containers can reach each other by name
+    healthcheck:                          # Docker periodically checks if the app is really ready
+      test: [ "CMD-SHELL", "curl -f http://localhost:8888/actuator/health || exit 1" ]
+      interval: 10s                       # Run the check every 10 seconds
+      timeout: 5s                         # Fail the check if it takes longer than 5 seconds
+      retries: 10                         # Mark "unhealthy" after 10 consecutive failures
+
+  eureka-server:                          # Discovery server container (DNS name "eureka-server")
+    build: ./discovery
+    ports:
+      - "8761:8761"                       # Eureka dashboard: http://localhost:8761
+    depends_on:                           # Startup order
+      config-server:                      # Needs the Config Server first (to read its config)
+        condition: service_healthy        # Wait until config-server's healthcheck passes
+    networks:                             # Networks this container joins
+      - microservices-net                 # Same shared network
+
+  customer-service:                       # Customer microservice container
+    build: ./customer                     # Build from the Dockerfile in ./customer
+    ports:
+      - "8090:8090"                       # Host 8090 -> container 8090 (must match server.port)
+    environment:                          # OS environment variables inside the container
+      # These feed the ${MONGO_USER}, ${MONGO_PASSWORD} placeholders
+      # in customer-service.yml. The values come from your local .env file.
+      MONGO_USER: ${MONGO_USER}
+      MONGO_PASSWORD: ${MONGO_PASSWORD}
+    depends_on:                           # Startup order
+      config-server:                      # Needs configuration first
+        condition: service_healthy        # Wait until the Config Server is healthy
+      eureka-server:                      # Needs the registry to register in
+        condition: service_started        # Only waits for the container to start, NOT for Eureka to be ready
+      mongo:                              # Needs the database
+        condition: service_healthy        # Wait until Mongo's healthcheck passes
+    networks:                             # Networks this container joins
+      - microservices-net                 # Same shared network
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8090/actuator/health/readiness || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s     # grace period: Spring Boot needs time to start, failures here are ignored
+
+  postgres:
+    image: postgres:16
+    container_name: e_commerce_db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /data/postgres
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - postgres_data:/data/postgres
+    networks:
+      - microservices-net
+    restart: unless-stopped
+
+  pgadmin:
+    container_name: ms_pgadmin
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+    networks:
+      - microservices-net
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:7
+    container_name: ecommerce-mongo
+    restart: unless-stopped
+    ports:
+      - "${MONGO_PORT}:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - microservices-net
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--quiet",
+          "--username",
+          "${MONGO_USER}",
+          "--password",
+          "${MONGO_PASSWORD}",
+          "--authenticationDatabase",
+          "admin",
+          "--eval",
+          "db.adminCommand('ping').ok"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongo-express:
+    image: mongo-express
+    container_name: mongo_express
+    restart: unless-stopped
+    ports:
+      - "${MONGO_EXPRESS_PORT}:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_USER}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_PASSWORD}
+      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_USERNAME}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD}
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - microservices-net
+
+  mail-dev:
+    container_name: ms-mail-dev
+    image: maildev/maildev
+    ports:
+      - "1080:1080"
+      - "1025:1025"
+
+networks:
+  microservices-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  mongo_data:
+  pgadmin:
+

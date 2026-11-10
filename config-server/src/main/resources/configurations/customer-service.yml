@@ -1,0 +1,36 @@
+# ---------------------------------------------------------------
+# Served by the Config Server to the app named "customer-service".
+# NOTE: this file is packaged inside the config-server jar, so after any
+# change you must rebuild config-server (mvn clean package) and its image.
+# ---------------------------------------------------------------
+server:
+  port: 8090                              # Port the customer service listens on (must match compose "8090:8090")
+
+spring:
+  mongodb:                                # MongoDB connection settings (Spring Boot 4 uses spring.mongodb.*)
+    # Full connection string:
+    #   ${MONGO_USER} / ${MONGO_PASSWORD} / ${MONGO_PORT} -> placeholders filled from the
+    #     customer container's environment variables (passed in docker-compose.yaml).
+    #   "mongo"     -> Docker service name of the MongoDB container (not localhost!).
+    #   "customer"  -> database name used by this service.
+    #   authSource=admin -> the root user was created in the "admin" database.
+    uri: mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongo:27017/customer?authSource=admin
+
+eureka:                                   # Eureka client settings
+  client:                                 # How this service talks to Eureka
+    service-url:                          # Where Eureka servers are
+      # Register with / look up services in Eureka using the Docker service name.
+      defaultZone: http://eureka-server:8761/eureka/
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info      # expose only what we need, never "*"
+  endpoint:
+    health:
+      probes:
+        enabled: true             # turns on /health/liveness and /health/readiness
+      group:
+        readiness:
+          include: readinessState,mongo   # ready only if the DB answers
