@@ -19,7 +19,7 @@ services:                                 # List of containers to run
       retries: 10                         # Mark "unhealthy" after 10 consecutive failures
 
   eureka-server:                          # Discovery server container (DNS name "eureka-server")
-    build: ./discovery
+    build: ./discovery-service
     ports:
       - "8761:8761"                       # Eureka dashboard: http://localhost:8761
     depends_on:                           # Startup order
@@ -29,7 +29,7 @@ services:                                 # List of containers to run
       - microservices-net                 # Same shared network
 
   customer-service:                       # Customer microservice container
-    build: ./customer                     # Build from the Dockerfile in ./customer
+    build: ./customer-service             # Build from the Dockerfile in ./customer
     ports:
       - "8090:8090"                       # Host 8090 -> container 8090 (must match server.port)
     environment:                          # OS environment variables inside the container

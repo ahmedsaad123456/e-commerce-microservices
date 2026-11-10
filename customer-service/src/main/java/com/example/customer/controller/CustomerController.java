@@ -20,20 +20,20 @@ public class CustomerController {
     private final CustomerService service;
 
     @PostMapping
-    public ApiResponse<String> createCustomer(
+    public ApiResponse<CustomerResponse> createCustomer(
             @RequestBody @Valid CustomerRequest request
     ) {
-        String result = this.service.createCustomer(request);
+        CustomerResponse result = this.service.createCustomer(request);
         return ApiResponse.ok("Customer created successfully", result);
     }
 
     @PutMapping("/{customer-id}")
-    public ApiResponse<Void> updateCustomer(
+    public ApiResponse<CustomerResponse> updateCustomer(
             @PathVariable("customer-id") String customerId,
             @RequestBody @Valid CustomerRequest request
     ) {
-        this.service.updateCustomer(customerId, request);
-        return ApiResponse.ok("Customer updated successfully", null);
+        CustomerResponse response = this.service.updateCustomer(customerId, request);
+        return ApiResponse.ok("Customer updated successfully", response);
     }
 
     @GetMapping
@@ -65,4 +65,5 @@ public class CustomerController {
     ) {
         this.service.deleteCustomer(customerId);
     }
+
 }

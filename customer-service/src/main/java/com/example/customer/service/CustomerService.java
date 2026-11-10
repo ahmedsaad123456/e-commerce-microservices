@@ -1,12 +1,15 @@
 package com.example.customer.service;
 
 import com.example.customer.common.Constants;
+import com.example.customer.common.ErrorCode;
 import com.example.customer.dto.CustomerRequest;
 import com.example.customer.dto.CustomerResponse;
+import com.example.customer.exceptions.AppException;
 import com.example.customer.exceptions.ResourceNotFoundException;
 import com.example.customer.mapper.CustomerMapper;
 import com.example.customer.repository.CustomerRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,18 +21,32 @@ public class CustomerService {
     private final CustomerRepository repository;
     private final CustomerMapper mapper;
 
-    public String createCustomer(CustomerRequest request) {
-        var customer = repository.save(mapper.toCustomer(request));
-        return customer.getId();
+    public CustomerResponse createCustomer(CustomerRequest request) {
+        try {
+            var customer = repository.save(mapper.toCustomer(request));
+            return mapper.toCustomerResponse(customer);
+        } catch (DuplicateKeyException e) {
+            throw new AppException(
+                    ErrorCode.CUSTOMER_EMAIL_ALREADY_EXISTS, request.email()
+            );
+        }
+
     }
 
-    public void updateCustomer(String id, CustomerRequest request) {
+    public CustomerResponse updateCustomer(String id, CustomerRequest request) {
         var customer = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(Constants.CUSTOMER, id));
 
         mapper.mergeCustomer(customer, request);
 
-        repository.save(customer);
+        try {
+            repository.save(customer);
+            return mapper.toCustomerResponse(customer);
+        } catch (DuplicateKeyException e) {
+            throw new AppException(
+                    ErrorCode.CUSTOMER_EMAIL_ALREADY_EXISTS, request.email()
+            );
+        }
     }
 
     public List<CustomerResponse> findAllCustomers() {

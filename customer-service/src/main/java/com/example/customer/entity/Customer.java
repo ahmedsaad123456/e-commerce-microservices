@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @AllArgsConstructor
@@ -20,6 +21,8 @@ public class Customer {
     private String id;
     private String firstname;
     private String lastname;
+    // Creates a unique index to prevent duplicate email values in the database.
+    @Indexed(unique = true)   // Mongo rejects a second document with the same email
     private String email;
     private Address address;
 }
