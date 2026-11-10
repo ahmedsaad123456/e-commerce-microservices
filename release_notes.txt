@@ -1,5 +1,3 @@
-## Customer & Microservices Improvements
+## Fix Customer Test
 
-- Unique Email:Added unique email validation and return `409 Conflict` for duplicate emails.
-- Automated Tests: Added service unit tests with Mockito and repository integration tests with MongoDB Testcontainers.
-- Service Update Script:Added `update.ps1` to automate building and updating services using Docker Compose.
+- Add the response of the customer in the test.

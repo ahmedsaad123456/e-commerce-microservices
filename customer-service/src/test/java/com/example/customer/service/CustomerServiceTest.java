@@ -2,6 +2,7 @@
 package com.example.customer.service;
 
 import com.example.customer.dto.CustomerRequest;
+import com.example.customer.dto.CustomerResponse;
 import com.example.customer.entity.Customer;
 import com.example.customer.exceptions.ResourceNotFoundException;
 import com.example.customer.mapper.CustomerMapper;
@@ -47,11 +48,15 @@ class CustomerServiceTest {
         // Simulate the saved customer returned by the repository.
         var saved = Customer.builder().id("c1").build();
 
+        var response = CustomerResponse.builder().id("c1").build(); // Adjust constructor to match your DTO
+
         // Define what the mapper should return.
         when(mapper.toCustomer(request)).thenReturn(entity);
-
         // Define what the repository should return after saving.
         when(repository.save(entity)).thenReturn(saved);
+        when(mapper.toCustomerResponse(saved)).thenReturn(response);
+
+
 
         // Call the service and get the created customer's ID.
         String id = service.createCustomer(request).id();
