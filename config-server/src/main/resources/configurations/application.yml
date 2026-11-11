@@ -1,0 +1,14 @@
+eureka:
+  instance:
+    # Register this service in Eureka with its container IP address instead of
+    # its hostname. Inside Docker the hostname is a random container ID, so using
+    # the IP makes service-to-service calls more reliable.
+    prefer-ip-address: true
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0

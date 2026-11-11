@@ -1,0 +1,39 @@
+
+# Name of the GitHub Actions workflow
+name: product-service
+
+# Define when this workflow should run
+on:
+  push:
+    paths:
+      - "product-service/**"
+      - ".github/workflows/customer-service.yml"
+
+  pull_request:
+    paths:
+      - "product-service/**"
+
+jobs:
+  build:
+    # Use a specific Ubuntu version for a predictable environment
+    runs-on: ubuntu-24.04
+
+    # Execute all run commands inside the customer-service directory
+    defaults:
+      run:
+        working-directory: product-service
+
+    steps:
+      # Check out the repository code
+      - uses: actions/checkout@v5
+
+      # Set up JDK 21 and cache Maven dependencies
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      # Build the application and run verification tests
+      - name: Build and test
+        run: ./mvnw -B verify

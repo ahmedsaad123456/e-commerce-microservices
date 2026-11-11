@@ -45,18 +45,36 @@ if (-not $NoConfig) { $toBuild += 'config-server' }
 if (-not $RestartOnly) { $toBuild += $Services }
 foreach ($f in ($toBuild | Select-Object -Unique)) { Build-Jar $f }
 
-# 2) rebuild images and recreate the containers
-$targets = @()
-if (-not $NoConfig) { $targets += 'config-server' }
-$targets += $Services
-$targets = $targets | Select-Object -Unique | ForEach-Object { To-Compose $_ }
+$targets = [System.Collections.Generic.List[string]]::new()
 
-if ($targets.Count -eq 0) { throw 'Nothing to do: pass a service name or remove -NoConfig' }
+if (-not $NoConfig) {
+    $targets.Add('config-server')
+}
+
+foreach ($service in $Services) {
+    $targets.Add((To-Compose $service))
+}
+
+$targets = @($targets | Select-Object -Unique)
+
+if ($targets.Count -eq 0) {
+    throw 'Nothing to do: pass a service name or remove -NoConfig'
+}
 
 Write-Host "==> docker compose up: $($targets -join ', ')" -ForegroundColor Cyan
-# --force-recreate makes sure the services re-read their config at startup
-docker compose up -d --build --force-recreate @targets
-if ($LASTEXITCODE -ne 0) { throw 'docker compose up failed' }
+
+$composeArgs = @(
+    'up'
+    '-d'
+    '--build'
+    '--force-recreate'
+) + $targets
+
+& docker compose @composeArgs
+
+if ($LASTEXITCODE -ne 0) {
+    throw 'docker compose up failed'
+}
 
 docker compose ps
 Write-Host 'Done.' -ForegroundColor Green

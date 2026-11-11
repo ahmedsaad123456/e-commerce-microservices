@@ -19,12 +19,6 @@ spring:
     mongodb:
       auto-index-creation: true
 
-eureka:                                   # Eureka client settings
-  client:                                 # How this service talks to Eureka
-    service-url:                          # Where Eureka servers are
-      # Register with / look up services in Eureka using the Docker service name.
-      defaultZone: http://eureka-server:8761/eureka/
-
 management:
   endpoints:
     web:

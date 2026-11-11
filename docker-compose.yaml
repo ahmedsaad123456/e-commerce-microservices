@@ -29,7 +29,7 @@ services:                                 # List of containers to run
       - microservices-net                 # Same shared network
 
   customer-service:                       # Customer microservice container
-    build: ./customer-service             # Build from the Dockerfile in ./customer
+    build: ./customer-service             # Build from the Dockerfile in ./customer-service
     ports:
       - "8090:8090"                       # Host 8090 -> container 8090 (must match server.port)
     environment:                          # OS environment variables inside the container
@@ -53,6 +53,33 @@ services:                                 # List of containers to run
       retries: 10
       start_period: 40s     # grace period: Spring Boot needs time to start, failures here are ignored
 
+  product-service:                        # Product microservice container (PostgreSQL + Flyway + Redis)
+    build: ./product-service              # Build from the Dockerfile in ./product-service
+    ports:
+      - "8091:8050"                       # Host 8091 -> container 8050 (must match server.port in product-service.yml)
+    environment:                          # OS environment variables inside the container
+      # These feed the ${...} placeholders in product-service.yml.
+      # The values come from your local .env file.
+      PRODUCT_DB_PASSWORD: ${PRODUCT_DB_PASSWORD}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}   # Redis password (spring.data.redis.password)
+    depends_on:                           # Startup order
+      config-server:                      # Needs configuration first
+        condition: service_healthy        # Wait until the Config Server is healthy
+      eureka-server:                      # Needs the registry to register in
+        condition: service_started        # Only waits for the container to start
+      postgres:                           # Flyway runs migrations at startup, so the DB must be ready
+        condition: service_healthy        # Wait until Postgres accepts connections
+      redis:                              # Needs the cache
+        condition: service_healthy        # Wait until Redis answers PING
+    networks:                             # Networks this container joins
+      - microservices-net                 # Same shared network
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8091/actuator/health/readiness || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s     # grace period: Spring Boot + Flyway migrations need time to start
+
   postgres:
     image: postgres:16
     container_name: e_commerce_db
@@ -60,14 +87,21 @@ services:                                 # List of containers to run
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PRODUCT_DB_PASSWORD: ${PRODUCT_DB_PASSWORD}      # used by the init script
       PGDATA: /data/postgres
     ports:
       - "${POSTGRES_PORT}:5432"
     volumes:
       - postgres_data:/data/postgres
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
     networks:
       - microservices-net
     restart: unless-stopped
+    healthcheck:                          # needed so "service_healthy" works for product-service
+      test: [ "CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   pgadmin:
     container_name: ms_pgadmin
@@ -83,6 +117,40 @@ services:                                 # List of containers to run
     networks:
       - microservices-net
     restart: unless-stopped
+
+  redis:                                  # Redis cache (DNS name "redis")
+    image: redis:7                        # Official Redis image, version 7
+    container_name: ecommerce-redis       # Fixed container name
+    restart: unless-stopped               # Restart automatically unless stopped manually
+    command: redis-server --requirepass ${REDIS_PASSWORD} # Require a password for every connection
+    ports:
+      - "${REDIS_PORT}:6379"              # HOST port from .env -> Redis default port 6379 (container side stays 6379)
+    volumes:
+      - redis_data:/data                  # Keep Redis snapshots so cached data survives restarts
+    networks:
+      - microservices-net
+    healthcheck:                          # Check that Redis really answers
+      test: [ "CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "--no-auth-warning", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis-commander:                        # Web UI for Redis (the equivalent of mongo-express)
+    image: rediscommander/redis-commander:latest
+    container_name: redis_commander
+    restart: unless-stopped
+    ports:
+      - "${REDIS_COMMANDER_PORT}:8081"
+    environment:
+      # Format: label:host:port:dbIndex:password  (avoid ":" inside the password)
+      REDIS_HOSTS: local:redis:6379:0:${REDIS_PASSWORD}
+      HTTP_USER: ${REDIS_COMMANDER_USERNAME}     # Username to open the web UI
+      HTTP_PASSWORD: ${REDIS_COMMANDER_PASSWORD} # Password to open the web UI
+    depends_on:
+      redis:
+        condition: service_healthy        # Wait until Redis is healthy
+    networks:
+      - microservices-net
 
   mongo:
     image: mongo:7
@@ -149,4 +217,4 @@ volumes:
   postgres_data:
   mongo_data:
   pgadmin:
-
+  redis_data:                             # NEW: storage for Redis data
