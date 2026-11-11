@@ -18,7 +18,7 @@ jobs:
     # Use a specific Ubuntu version for a predictable environment
     runs-on: ubuntu-24.04
 
-    # Execute all run commands inside the customer-service directory
+    # Execute all run commands inside the product-service directory
     defaults:
       run:
         working-directory: product-service
