@@ -1,10 +1,3 @@
-# Product Service
+# Fix Maven wrapper executable permission
 
-- Created and configured the Product Service.
-- Added Product and Category entities and database configuration.
-- Integrated Flyway database migrations.
-- Implemented product creation and purchase operations.
-- Implemented race-condition-safe stock management.
-- Implemented purchase idempotency.
-- Integrated Redis caching with TTL and cache eviction.
-- Added unit and integration tests using PostgreSQL Testcontainers.
+- Add mvnw file for the permission
