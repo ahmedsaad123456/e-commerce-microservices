@@ -1,3 +1,10 @@
-# Fix Product test error.
+# Order Service Implementation
 
-- Shared integration test setup with PostgreSQL Testcontainer and external services disabled.
+- Implemented Order creation flow with customer validation and product purchasing.
+- Added PostgreSQL entities and Flyway database migrations for Order and OrderLine.
+- Integrated OpenFeign for inter-service communication.
+- Configured client connection and read timeouts.
+- Integrated Resilience4j with Retry, CircuitBreaker, bulkhead and fallback handling.
+- Added purchase idempotency to prevent duplicate purchases during retries.
+- Improved error handling for unavailable dependent services.
+- Reviewed synchronous vs asynchronous communication patterns and their trade-offs.

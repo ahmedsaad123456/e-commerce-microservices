@@ -1,0 +1,97 @@
+
+# ---------------------------------------------------------------
+# Served by the Config Server to the app named "order-service".
+# This file is packaged inside the config-server jar.
+# ---------------------------------------------------------------
+
+server:
+  port: 8070
+
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/order_db
+    username: order_user
+    password: ${ORDER_DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  cloud:
+    openfeign:
+      client:
+        config:
+          default: # applies to every Feign client
+            connect-timeout: ${clients.connect-timeout-ms}
+            read-timeout: ${clients.read-timeout-ms}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,circuitbreakers,circuitbreakerevents
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      group:
+        readiness:
+          # The service is ready only when PostgreSQL is available.
+          include: readinessState,db
+
+clients:
+  type: feign
+  connect-timeout-ms: 1000
+  read-timeout-ms: 3000
+
+
+resilience4j:
+  retry:
+    configs:
+      default:
+        max-attempts: 3
+        wait-duration: 300ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        enable-randomized-wait: true
+        randomized-wait-factor: 0.3
+        retry-exceptions:                       # allow-list: ONLY these are retried
+          - com.example.order_service.exceptions.DependencyUnavailableException
+    instances:
+      product:
+        base-config: default
+      customer:
+        base-config: default
+
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 60              # see the note in step 09 about why not 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        record-exceptions:                      # ONLY these count as failures
+          - com.example.order_service.exceptions.DependencyUnavailableException
+    instances:
+      product:
+        base-config: default
+      customer:
+        base-config: default
+
+  bulkhead:
+    configs:
+      default:
+        max-concurrent-calls: 20      # at most 20 calls to this dependency at the same moment
+        max-wait-duration: 0ms        # do not queue: when the bulkhead is full, reject immediately
+    instances:
+      product:
+        base-config: default

@@ -74,7 +74,29 @@ services:                                 # List of containers to run
     networks:                             # Networks this container joins
       - microservices-net                 # Same shared network
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:8091/actuator/health/readiness || exit 1" ]
+      test: [ "CMD-SHELL", "curl -f http://localhost:8050/actuator/health/readiness || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s     # grace period: Spring Boot + Flyway migrations need time to start
+
+  order-service:
+    build: ./order-service              # Build from the Dockerfile in ./order-service
+    ports:
+      - "8070:8070"
+    environment:
+      ORDER_DB_PASSWORD: ${ORDER_DB_PASSWORD}
+    depends_on: # Startup order
+      config-server: # Needs configuration first
+        condition: service_healthy        # Wait until the Config Server is healthy
+      eureka-server: # Needs the registry to register in
+        condition: service_started        # Only waits for the container to start
+      postgres: # Flyway runs migrations at startup, so the DB must be ready
+        condition: service_healthy        # Wait until Postgres accepts connections
+    networks: # Networks this container joins
+      - microservices-net                 # Same shared network
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8070/actuator/health/readiness || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -88,6 +110,7 @@ services:                                 # List of containers to run
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       PRODUCT_DB_PASSWORD: ${PRODUCT_DB_PASSWORD}      # used by the init script
+      ORDER_DB_PASSWORD: ${ORDER_DB_PASSWORD}
       PGDATA: /data/postgres
     ports:
       - "${POSTGRES_PORT}:5432"
