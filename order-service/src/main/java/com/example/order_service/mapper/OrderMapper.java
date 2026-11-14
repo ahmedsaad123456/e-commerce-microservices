@@ -30,6 +30,9 @@ public interface OrderMapper {
     @Mapping(target = "productName" , source = "name")
     OrderLine toOrderLine(PurchaseResponse purchased);
 
+    OrderLineResponse toOrderLineResponse(OrderLine orderLine);
+
+
     OrderResponse toOrderResponse(Order order);
 
     default BigDecimal calculateTotal(List<PurchaseResponse> purchased) {

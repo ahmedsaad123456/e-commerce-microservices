@@ -1,16 +1,23 @@
 package com.example.order_service.service;
 
 import com.example.order_service.common.Constants;
+import com.example.order_service.common.ErrorCode;
 import com.example.order_service.customer.CustomerGateway;
 import com.example.order_service.dto.*;
+import com.example.order_service.entity.Order;
+import com.example.order_service.exceptions.AppException;
 import com.example.order_service.exceptions.ResourceNotFoundException;
+import com.example.order_service.kafka.OrderProducer;
+import com.example.order_service.mapper.OrderEventMapper;
 import com.example.order_service.mapper.OrderMapper;
+import com.example.order_service.outbox.OrderWriter;
 import com.example.order_service.product.ProductGateway;
 import com.example.order_service.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -20,8 +27,9 @@ public class OrderService {
     private final CustomerGateway customers;
     private final ProductGateway products;
     private final OrderRepository orders;
-    private final OrderMapper mapper;
-
+    private final OrderMapper orderMapper;
+    private final OrderEventMapper orderEventMapper;
+    private final OrderWriter orderWriter;
     // Never keep a database transaction open while waiting for another service over HTTP.
     public OrderResponse createOrder(OrderRequest request) {
 
@@ -42,14 +50,14 @@ public class OrderService {
 
 
         // 3) Build the order using the Product service response.
-        var order = mapper.toOrder(request, purchased, reference);
+        var order = orderMapper.toOrder(request, purchased, reference);
 
-        mapper.addOrderLines(order, purchased);
+        orderMapper.addOrderLines(order, purchased);
 
         // 4) Save and return the response.
-        var savedOrder = orders.save(order);
+        var savedOrder = orderWriter.saveWithEvent(order);
 
-        return mapper.toOrderResponse(savedOrder);
+        return orderMapper.toOrderResponse(savedOrder);
     }
 
     @Transactional(readOnly = true)
@@ -58,6 +66,22 @@ public class OrderService {
         var order = orders.findWithLinesById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(Constants.ORDER, id));
 
-        return mapper.toOrderResponse(order);
+        return orderMapper.toOrderResponse(order);
     }
+
+
+
+    @Transactional(readOnly = true)
+    public List<OrderLineResponse> findLines(Long orderId) {
+        return loadWithLines(orderId).getLines().stream()
+                .map(orderMapper::toOrderLineResponse)
+                .toList();
+    }
+
+    private Order loadWithLines(Long id) {
+        // 404 when the order does not exist (an empty list would hide a wrong id from the caller)
+        return orders.findWithLinesById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, Constants.ORDER, id));
+    }
+
 }

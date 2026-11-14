@@ -1,10 +1,42 @@
-# Order Service Implementation
+### Kafka Integration & Reliable Event Processing
 
-- Implemented Order creation flow with customer validation and product purchasing.
-- Added PostgreSQL entities and Flyway database migrations for Order and OrderLine.
-- Integrated OpenFeign for inter-service communication.
-- Configured client connection and read timeouts.
-- Integrated Resilience4j with Retry, CircuitBreaker, bulkhead and fallback handling.
-- Added purchase idempotency to prevent duplicate purchases during retries.
-- Improved error handling for unavailable dependent services.
-- Reviewed synchronous vs asynchronous communication patterns and their trade-offs.
+- Set up Kafka using Docker, with Kafka UI for monitoring messages.
+- Implemented order confirmation event publishing from the Order Service.
+- Added Order Line endpoints and improved exception handling.
+- Explored Kafka fundamentals, including Topics, Partitions, Offsets, Consumer Groups, and Message Keys.
+- Implemented the Transactional Outbox Pattern to ensure reliable event publishing.
+- Added Kafka integration tests using Testcontainers to verify event delivery.
+
+
+
+
+## Kafka vs RabbitMQ
+
+- RabbitMQ is like a post office: it delivers the message, then deletes it.
+- Kafka is like a ledger: messages are written and kept,
+  and each consumer reads at its own pace with a bookmark (offset).
+
+- RabbitMQ: messages flow through it.
+- Kafka: messages live in it.
+
+
+# Which one to choose
+
+- RabbitMQ when:
+
+- You have background jobs: emails, image processing, PDFs, payments.
+  The message is executed once and is done (task queue).
+  You want smart routing, low latency, and simple operations.
+  Examples: Instagram image processing, Reddit karma.
+
+- Kafka when:
+
+- Several independent systems read the same event stream (analytics, fraud, audit).
+  You need replay or want to rebuild state from history.
+  Volume is huge (millions of events).
+  Examples: Netflix, Uber, LinkedIn.
+
+
+# Using both
+- Kafka is the durable event backbone.
+- RabbitMQ is the task queue that runs the work triggered by those events.

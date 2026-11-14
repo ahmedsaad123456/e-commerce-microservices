@@ -2,12 +2,15 @@ package com.example.order_service.controller;
 
 
 import com.example.order_service.common.ApiResponse;
+import com.example.order_service.dto.OrderLineResponse;
 import com.example.order_service.dto.OrderRequest;
 import com.example.order_service.dto.OrderResponse;
 import com.example.order_service.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/orders")
@@ -28,5 +31,10 @@ public class OrderController {
             @PathVariable("order-id") Long id
     ) {
         return ApiResponse.ok("Order retrieved successfully", service.findOrderById(id));
+    }
+
+    @GetMapping("/order-line/{order-id}")
+    public ApiResponse<List<OrderLineResponse>> findListOrderLinesByOrder(@PathVariable("order-id") Long orderId) {
+        return ApiResponse.ok(service.findLines(orderId));
     }
 }

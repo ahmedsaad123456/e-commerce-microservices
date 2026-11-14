@@ -20,6 +20,16 @@ spring:
           default: # applies to every Feign client
             connect-timeout: ${clients.connect-timeout-ms}
             read-timeout: ${clients.read-timeout-ms}
+  kafka:
+    bootstrap-servers: kafka:19092      # change to localhost:9092 only if you run the service from the IDE
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all                         # the broker confirms only after the message is safely stored
+      properties:
+        enable.idempotence: true        # a network retry can never create a duplicate inside Kafka
+        max.block.ms: 3000              # if Kafka is down, fail after 3s instead of hanging the request for 60s
+
 
   jpa:
     hibernate:
