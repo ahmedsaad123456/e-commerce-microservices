@@ -7,13 +7,13 @@ import com.example.order_service.dto.*;
 import com.example.order_service.entity.Order;
 import com.example.order_service.exceptions.AppException;
 import com.example.order_service.exceptions.ResourceNotFoundException;
-import com.example.order_service.kafka.OrderProducer;
-import com.example.order_service.mapper.OrderEventMapper;
 import com.example.order_service.mapper.OrderMapper;
+import com.example.order_service.outbox.OrderFailureWriter;
 import com.example.order_service.outbox.OrderWriter;
 import com.example.order_service.product.ProductGateway;
 import com.example.order_service.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,13 +22,14 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class OrderService {
 
     private final CustomerGateway customers;
     private final ProductGateway products;
     private final OrderRepository orders;
     private final OrderMapper orderMapper;
-    private final OrderEventMapper orderEventMapper;
+    private final OrderFailureWriter orderFailureWriter;
     private final OrderWriter orderWriter;
     // Never keep a database transaction open while waiting for another service over HTTP.
     public OrderResponse createOrder(OrderRequest request) {
@@ -47,17 +48,37 @@ public class OrderService {
 
         var purchased = products.purchase(new PurchaseRequest(reference, items));
 
+        // If the order service is killed here, we need some solutions to restore the stock
+        // we can make the product receives the order confirmation to ensure the deduction
+        // at the same time we need schedule to look at the db, if any product stock doesn't have the confirmation
+        // we will restore the products of that transaction to the stock
 
 
-        // 3) Build the order using the Product service response.
-        var order = orderMapper.toOrder(request, purchased, reference);
+        try {
+            // 3) Build the order using the Product service response.
+            var order = orderMapper.toOrder(request, purchased, reference);
+            orderMapper.addOrderLines(order, purchased);
 
-        orderMapper.addOrderLines(order, purchased);
+            // 4) Save and return the response.
+            var savedOrder = orderWriter.saveWithEvent(order);
+            return orderMapper.toOrderResponse(savedOrder);
 
-        // 4) Save and return the response.
-        var savedOrder = orderWriter.saveWithEvent(order);
+        } catch (RuntimeException e) {
+            publishFailure(reference, e);      // tell the Product service to give the stock back
+            throw e;                           // the client still receives the original error
+        }
+    }
 
-        return orderMapper.toOrderResponse(savedOrder);
+
+    private void publishFailure(UUID reference, RuntimeException cause) {
+        // The try/catch is HERE and not inside the writer: if the writer's own transaction fails, catching the error
+        // inside it would still make Spring throw UnexpectedRollbackException at commit
+        try {
+            orderFailureWriter.recordFailure(reference, cause);
+        } catch (RuntimeException ex) {
+            log.error("Could not record the failure of purchase {}: the Product reconciliation job will release it",
+                    reference, ex);
+        }
     }
 
     @Transactional(readOnly = true)

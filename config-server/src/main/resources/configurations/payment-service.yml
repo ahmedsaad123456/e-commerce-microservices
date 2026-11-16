@@ -1,0 +1,60 @@
+
+# ---------------------------------------------------------------
+# Served by the Config Server to the app named "order-service".
+# This file is packaged inside the config-server jar.
+# ---------------------------------------------------------------
+
+server:
+  port: 8060
+
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/payment_db
+    username: payment_user
+    password: ${PAYMENT_DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: ${RABBITMQ_USER}
+    password: ${RABBITMQ_PASSWORD}
+    publisher-confirm-type: correlated     # lets us wait for the broker's confirmation
+
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+  kafka:
+    bootstrap-servers: kafka:19092
+    consumer:
+      group-id: payment-service
+      auto-offset-reset: earliest        # a new group reads from the first message, not from "now"
+    producer:
+      acks: all
+      properties:
+        enable.idempotence: true
+        max.block.ms: 3000
+
+payment:
+  fake-gateway:
+    decline-amount: 666.00               # test rule: an order with exactly this total is declined
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      group:
+        readiness:
+          # The service is ready only when PostgreSQL is available.
+          include: readinessState,db

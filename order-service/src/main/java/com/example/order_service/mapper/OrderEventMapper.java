@@ -1,7 +1,7 @@
 package com.example.order_service.mapper;
 
 import com.example.order_service.entity.Order;
-import com.example.order_service.kafka.OrderConfirmation;
+import com.example.order_service.entity.OrderConfirmation;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

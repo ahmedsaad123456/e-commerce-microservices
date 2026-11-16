@@ -1,6 +1,5 @@
-package com.example.order_service.kafka;
+package com.example.order_service.entity;
 
-import com.example.order_service.entity.PaymentMethod;
 
 import java.math.BigDecimal;
 import java.util.List;

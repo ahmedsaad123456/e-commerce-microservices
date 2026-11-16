@@ -1,0 +1,37 @@
+server:
+  port: 8040
+spring:
+  mongodb:
+    uri: mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongo:27017/notification?authSource=admin
+  data:
+    mongodb:
+      auto-index-creation: true           # needed for @Indexed(unique = true)
+  kafka:
+    bootstrap-servers: kafka:19092
+    consumer:
+      group-id: notification-service
+      auto-offset-reset: earliest
+    producer:
+      acks: all                           # used by the dead-letter publisher
+  mail:
+    host: mail-dev
+    port: 1025
+    properties:
+      # without these, a mail server that hangs would block our thread for minutes
+      mail.smtp.connectiontimeout: 3000
+      mail.smtp.timeout: 3000
+      mail.smtp.writetimeout: 3000
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: ${RABBITMQ_USER}
+    password: ${RABBITMQ_PASSWORD}
+    listener:
+      simple:
+        acknowledge-mode: manual            # WE ack/nack, at the right moment
+        prefetch: 1                         # each worker holds at most 1 unacknowledged job
+        default-requeue-rejected: false     # an unexpected error must never put a message back in a hot loop
+
+notification:
+    worker:
+      simulated-delay-ms: 0                   # set it to 1000 only for the competing-consumers experiment

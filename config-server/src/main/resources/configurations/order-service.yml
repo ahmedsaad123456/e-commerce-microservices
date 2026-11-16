@@ -13,6 +13,12 @@ spring:
     username: order_user
     password: ${ORDER_DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: ${RABBITMQ_USER}
+    password: ${RABBITMQ_PASSWORD}
+    publisher-confirm-type: correlated     # lets us wait for the broker's confirmation
   cloud:
     openfeign:
       client:
@@ -29,6 +35,9 @@ spring:
       properties:
         enable.idempotence: true        # a network retry can never create a duplicate inside Kafka
         max.block.ms: 3000              # if Kafka is down, fail after 3s instead of hanging the request for 60s
+    consumer:
+      group-id: order-service
+      auto-offset-reset: earliest
 
 
   jpa:

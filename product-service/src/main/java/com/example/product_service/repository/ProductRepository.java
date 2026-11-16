@@ -35,4 +35,11 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
 
     @Query("select p.availableQuantity from Product p where p.id = :id")
     int findAvailableQuantity(@Param("id") Integer id);
+
+
+    // Native SQL on purpose: it does not depend on the entity field names, and it is one atomic UPDATE
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query(value = "UPDATE product SET available_quantity = available_quantity + :quantity WHERE id = :id",
+            nativeQuery = true)
+    int increaseStock(@Param("id") Integer id, @Param("quantity") int quantity);
 }

@@ -13,6 +13,13 @@ spring:
     username: product_user
     password: ${PRODUCT_DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
+  kafka:
+    bootstrap-servers: kafka:19092
+    consumer:
+      group-id: product-service
+      auto-offset-reset: earliest
+    producer:
+      acks: all
 
   jpa:
     hibernate:

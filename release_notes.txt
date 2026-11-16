@@ -1,42 +1,32 @@
-### Kafka Integration & Reliable Event Processing
+### Payment, Notification & Asynchronous Communication
 
-- Set up Kafka using Docker, with Kafka UI for monitoring messages.
-- Implemented order confirmation event publishing from the Order Service.
-- Added Order Line endpoints and improved exception handling.
-- Explored Kafka fundamentals, including Topics, Partitions, Offsets, Consumer Groups, and Message Keys.
-- Implemented the Transactional Outbox Pattern to ensure reliable event publishing.
-- Added Kafka integration tests using Testcontainers to verify event delivery.
-
-
-
-
-## Kafka vs RabbitMQ
-
-- RabbitMQ is like a post office: it delivers the message, then deletes it.
-- Kafka is like a ledger: messages are written and kept,
-  and each consumer reads at its own pace with a bookmark (offset).
-
-- RabbitMQ: messages flow through it.
-- Kafka: messages live in it.
+- Implemented the Payment Service with PostgreSQL and Kafka-based payment confirmation events.
+- Integrated the Order Service with the Payment Service to process payments.
+- Implemented the Notification Service using MongoDB, rabbitmq consumers, and email notifications.
+- Added MailDev to Docker Compose to test and inspect outgoing emails.
+- Explored Eventual Consistency and the Saga Pattern, handling order states (`PENDING`, `CONFIRMED`, and `CANCELLED`) based on payment results.
+- Implemented compensating transactions to restore product stock when a payment fails.
+- Added payment idempotency using a unique order reference to prevent duplicate payment processing.
+- Integrated RabbitMQ to handle email jobs asynchronously using Direct Exchanges, Routing Keys, and durable queues.
+- Implemented an email worker using `@RabbitListener` with manual acknowledgments (ACK/NACK).
+- Configured message retries with TTL and Dead Letter Exchanges, routing messages to a Dead Letter Queue after the maximum number of attempts.
 
 
-# Which one to choose
+## Saga, Outbox, Kafka
 
-- RabbitMQ when:
+**Saga**
+- Problem: a process spans several services, and one step fails after others already succeeded. `@Transactional` can't roll back across services.
+- Solution: run compensating actions (like a refund) to undo the earlier steps.
 
-- You have background jobs: emails, image processing, PDFs, payments.
-  The message is executed once and is done (task queue).
-  You want smart routing, low latency, and simple operations.
-  Examples: Instagram image processing, Reddit karma.
+**Outbox**
+- Problem: you save to the DB and publish an event, but one can succeed while the other fails. The event is lost, or it describes something that never happened.
+- Solution: save the event in the same DB transaction as the data, then send it afterwards.
 
-- Kafka when:
+**Kafka**
+- Problem: many consumers need the same events, and you want to avoid coupling, tracking delivery yourself, or losing history.
+- Solution: producers publish once, each consumer tracks its own progress, and events are stored so they can be replayed, with ordering per key.
 
-- Several independent systems read the same event stream (analytics, fraud, audit).
-  You need replay or want to rebuild state from history.
-  Volume is huge (millions of events).
-  Examples: Netflix, Uber, LinkedIn.
-
-
-# Using both
-- Kafka is the durable event backbone.
-- RabbitMQ is the task queue that runs the work triggered by those events.
+**Together**
+- Saga coordinates the steps.
+- Outbox makes sure the events are not lost.
+- Kafka delivers them.

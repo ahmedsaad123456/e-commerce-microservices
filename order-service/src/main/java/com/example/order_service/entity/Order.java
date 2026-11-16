@@ -50,5 +50,19 @@ public class Order {
         lines.add(line);
         line.setOrder(this);
     }
+
+    // A state machine in two methods: the only legal move is PENDING -> CONFIRMED or PENDING -> CANCELLED.
+    // Anything else (a late or duplicated result) is ignored, so the order can never "go back" or flip.
+    public boolean confirm() {
+        if (status != OrderStatus.PENDING) return false;
+        status = OrderStatus.CONFIRMED;
+        return true;
+    }
+
+    public boolean cancel() {
+        if (status != OrderStatus.PENDING) return false;
+        status = OrderStatus.CANCELLED;
+        return true;
+    }
 }
 

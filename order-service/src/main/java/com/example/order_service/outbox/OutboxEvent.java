@@ -27,6 +27,14 @@ public class OutboxEvent implements Persistable<UUID> {
     @Column(nullable = false, length = 20)
     private OutboxStatus status;
 
+    // the existing "topic" field holds the Kafka topic, or the RabbitMQ EXCHANGE when destination = RABBITMQ
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private OutboxDestination destination;
+
+    @Column(length = 100)
+    private String routingKey;
+
     @Column(nullable = false) private int attempts;
     @Column(insertable = false, updatable = false) private Instant createdAt;   // filled by the DB default
     private Instant publishedAt;
@@ -41,6 +49,15 @@ public class OutboxEvent implements Persistable<UUID> {
         var e = new OutboxEvent();
         e.id = id; e.aggregateType = aggregateType; e.aggregateId = aggregateId;
         e.topic = topic; e.payload = payload; e.status = OutboxStatus.PENDING;
+        e.destination = OutboxDestination.KAFKA;
+        return e;
+    }
+
+    public static OutboxEvent pendingRabbit(UUID id, String aggregateType, String aggregateId,
+                                            String exchange, String routingKey, String payload) {
+        var e = pending(id, aggregateType, aggregateId, exchange, payload);
+        e.destination = OutboxDestination.RABBITMQ;
+        e.routingKey = routingKey;
         return e;
     }
 
