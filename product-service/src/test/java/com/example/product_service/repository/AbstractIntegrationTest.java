@@ -11,7 +11,9 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
         "eureka.client.enabled=false",                    // no Eureka in tests
         "spring.jpa.hibernate.ddl-auto=validate",         // entities must match the Flyway schema
         "spring.cache.type=none",                         // no Redis in tests
-        "spring.datasource.hikari.maximum-pool-size=60"   // enough connections for the 50-thread race test
+        "spring.datasource.hikari.maximum-pool-size=60",   // enough connections for the 50-thread race test
+
+        "spring.kafka.listener.auto-startup=false"
 })
 @Testcontainers
 public abstract class AbstractIntegrationTest {

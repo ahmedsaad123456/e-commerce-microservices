@@ -5,6 +5,7 @@ import com.example.product_service.entity.Product;
 import com.example.product_service.entity.StockMovement;
 import com.example.product_service.exceptions.AppException;
 import com.example.product_service.mapper.ProductMapper;
+import com.example.product_service.repository.AbstractIntegrationTest;
 import com.example.product_service.repository.CategoryRepository;
 import com.example.product_service.repository.ProductRepository;
 import com.example.product_service.repository.StockMovementRepository;
@@ -27,7 +28,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class ProductServiceTest {
+class ProductServiceTest extends AbstractIntegrationTest {
 
     @Mock
     ProductRepository products;
