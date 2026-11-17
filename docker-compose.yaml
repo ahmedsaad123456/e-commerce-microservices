@@ -554,6 +554,22 @@ services:                                 # List of containers to run
       retries: 10
       start_period: 30s
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.2
+    container_name: keycloak
+    command: start-dev            # dev mode: HTTP allowed, embedded H2 database, no caching. NEVER use in production.
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN}            # creates the first admin user on first start only
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_HOSTNAME: http://localhost:8180                        # the PUBLIC url, it ends up inside every token as "iss"
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"                   # containers may still call it as http://keycloak:8080
+    ports:
+      - "8180:8080"               # 8080 on this PC is used by Nginx (step 11 of day 8), so Keycloak gets 8180
+    volumes:
+      - keycloak_data:/opt/keycloak/data    # keeps realms/users after "docker compose down"
+    networks:
+      - microservices-net
+
   mail-dev:
     networks:
       - microservices-net
@@ -582,3 +598,4 @@ volumes:
   redis_data:
   kafka-data:
   rabbitmq-data:
+  keycloak_data:

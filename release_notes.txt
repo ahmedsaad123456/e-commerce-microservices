@@ -1,3 +1,0 @@
-### Fix product test
-
-- Disable kafka in the product tests.
