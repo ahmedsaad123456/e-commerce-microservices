@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -39,6 +40,13 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
     // Key used inside the MDC. Must match %X{correlationId} in the logging pattern.
     public static final String MDC_KEY = Constants.MDC_KEY;
 
+
+    @Value("${app.instance-id:local}")
+    private String instanceId;
+
+    @Value("${server.port:8070}")
+    private String serverPort;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -63,7 +71,8 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
         try {
             // First log line of the request: tells us which endpoint this id belongs to.
             log.info("--> {} {}", request.getMethod(), request.getRequestURI());
-
+            // Identify which Order Service instance handled the request.
+            response.setHeader("X-Served-By", instanceId + ":" + serverPort);
             // Continue to the next filter / the controller.
             chain.doFilter(request, response);
         } finally {

@@ -3,3 +3,8 @@ spring:
     name: product-service
   config:
     import: optional:configserver:http://config-server:8888
+
+logging:
+  pattern:
+    correlation: "[${spring.application.name:},%X{traceId:-},%X{spanId:-},%X{correlationId:-}] "
+  include-application-name: false   # we already print the name in the pattern, avoid duplication

@@ -1,0 +1,89 @@
+server:
+  port: 8222
+
+spring:
+  reactor:
+    context-propagation: auto   # keeps trace context across reactor threads
+  data:
+    redis:
+      host: redis
+      port: 6379
+      password: ${REDIS_PASSWORD}
+  cloud:
+    gateway:
+      server:
+        webflux:
+          discovery:
+            locator:
+              enabled: false    # we declare routes explicitly, no automatic route per service
+          routes:
+            - id: customer-service
+              uri: lb://customer-service
+              predicates:
+                - Path=/api/v1/customers/**
+
+            - id: product-service
+              uri: lb://product-service
+              predicates:
+                - Path=/api/v1/products/**
+
+            - id: order-service
+              uri: lb://order-service
+              predicates:
+                - Path=/api/v1/orders/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                      name: orderServiceCb
+                      fallbackUri: forward:/fallback/orders
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 5 # every second we increase the allowed requests bt 5
+                    redis-rate-limiter.burstCapacity: 10 # the max requests for the user
+                    redis-rate-limiter.requestedTokens: 1 # each request uses 1 token from the allowed requests
+                    key-resolver: "#{@ipKeyResolver}"
+
+            # Customer Service OpenAPI documentation
+            - id: customer-docs
+              uri: lb://customer-service
+              predicates:
+                - Path=/docs/customer-service/v3/api-docs
+              filters:
+                - SetPath=/v3/api-docs
+
+            # Product Service OpenAPI documentation
+            - id: product-docs
+              uri: lb://product-service
+              predicates:
+                - Path=/docs/product-service/v3/api-docs
+              filters:
+                - SetPath=/v3/api-docs
+
+            # Order Service OpenAPI documentation
+            - id: order-docs
+              uri: lb://order-service
+              predicates:
+                - Path=/docs/order-service/v3/api-docs
+              filters:
+                - SetPath=/v3/api-docs
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+    # Do not show Swagger's default Petstore example.
+    disable-swagger-default-url: true
+
+    # Available microservices in the dropdown list.
+    urls:
+      - name: customer-service
+        url: /docs/customer-service/v3/api-docs
+
+      - name: product-service
+        url: /docs/product-service/v3/api-docs
+
+      - name: order-service
+        url: /docs/order-service/v3/api-docs
+
+    # Select Customer Service when Swagger UI first opens.
+    urls-primary-name: customer-service

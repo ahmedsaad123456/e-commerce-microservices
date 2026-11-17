@@ -25,4 +25,5 @@ class FeignProductApi implements ProductApi {
             throw RemoteErrors.translate("product-service", e.status(), e.contentUTF8(), e);
         }
     }
+
 }

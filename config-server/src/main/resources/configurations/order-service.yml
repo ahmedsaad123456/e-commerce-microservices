@@ -18,6 +18,10 @@ spring:
     port: 5672
     username: ${RABBITMQ_USER}
     password: ${RABBITMQ_PASSWORD}
+    template:
+      observation-enabled: true
+    listener:
+      observation-enabled: true
     publisher-confirm-type: correlated     # lets us wait for the broker's confirmation
   cloud:
     openfeign:
@@ -26,8 +30,14 @@ spring:
           default: # applies to every Feign client
             connect-timeout: ${clients.connect-timeout-ms}
             read-timeout: ${clients.read-timeout-ms}
+      micrometer:
+        enabled: true
   kafka:
     bootstrap-servers: kafka:19092      # change to localhost:9092 only if you run the service from the IDE
+    template:
+      observation-enabled: true
+    listener:
+      observation-enabled: true
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer

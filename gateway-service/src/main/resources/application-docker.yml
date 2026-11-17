@@ -1,0 +1,12 @@
+eureka:
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${GATEWAY_NAME:${HOSTNAME:local}}
+
+logging:
+  structured:
+    format:
+      console: logstash
+    json:
+      add:
+        service: gateway-service

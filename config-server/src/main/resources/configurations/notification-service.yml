@@ -8,6 +8,10 @@ spring:
       auto-index-creation: true           # needed for @Indexed(unique = true)
   kafka:
     bootstrap-servers: kafka:19092
+    template:
+      observation-enabled: true
+    listener:
+      observation-enabled: true
     consumer:
       group-id: notification-service
       auto-offset-reset: earliest
@@ -26,11 +30,15 @@ spring:
     port: 5672
     username: ${RABBITMQ_USER}
     password: ${RABBITMQ_PASSWORD}
+    template:
+      observation-enabled: true
     listener:
       simple:
         acknowledge-mode: manual            # WE ack/nack, at the right moment
         prefetch: 1                         # each worker holds at most 1 unacknowledged job
         default-requeue-rejected: false     # an unexpected error must never put a message back in a hot loop
+        observation-enabled: true
+
 
 notification:
     worker:

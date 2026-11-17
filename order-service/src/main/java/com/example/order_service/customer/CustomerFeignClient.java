@@ -21,4 +21,6 @@ public interface CustomerFeignClient {
     RemoteResponse<Boolean> exists(
             @PathVariable("customer-id") String customerId
     );
+
+
 }

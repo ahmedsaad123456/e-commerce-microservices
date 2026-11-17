@@ -18,6 +18,10 @@ spring:
     consumer:
       group-id: product-service
       auto-offset-reset: earliest
+    template:
+      observation-enabled: true
+    listener:
+      observation-enabled: true
     producer:
       acks: all
 

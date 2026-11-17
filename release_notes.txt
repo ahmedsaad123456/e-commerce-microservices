@@ -1,32 +1,24 @@
-### Payment, Notification & Asynchronous Communication
+### API Gateway, Routing & Observability
 
-- Implemented the Payment Service with PostgreSQL and Kafka-based payment confirmation events.
-- Integrated the Order Service with the Payment Service to process payments.
-- Implemented the Notification Service using MongoDB, rabbitmq consumers, and email notifications.
-- Added MailDev to Docker Compose to test and inspect outgoing emails.
-- Explored Eventual Consistency and the Saga Pattern, handling order states (`PENDING`, `CONFIRMED`, and `CANCELLED`) based on payment results.
-- Implemented compensating transactions to restore product stock when a payment fails.
-- Added payment idempotency using a unique order reference to prevent duplicate payment processing.
-- Integrated RabbitMQ to handle email jobs asynchronously using Direct Exchanges, Routing Keys, and durable queues.
-- Implemented an email worker using `@RabbitListener` with manual acknowledgments (ACK/NACK).
-- Configured message retries with TTL and Dead Letter Exchanges, routing messages to a Dead Letter Queue after the maximum number of attempts.
+- Implemented the API Gateway using Spring Cloud Gateway to route requests to Customer, Product, and Order services.
+- Added a global filter to generate and propagate `X-Correlation-Id` across downstream services for request tracking.
+- Implemented Redis-based rate limiting using the Token Bucket algorithm to protect API endpoints and return `429 Too Many Requests` when limits are exceeded.
+- Integrated Circuit Breaker and fallback mechanisms using Resilience4j to handle service failures gracefully.
+- Integrated Zipkin with Micrometer Tracing to monitor distributed requests across microservices.
+- Improved log correlation by including `traceId` and `correlationId` to connect application logs with distributed traces.
+- Implemented client-side load balancing using Spring Cloud LoadBalancer and Eureka with `lb://` routing.
+- Configured multiple Order Service and Gateway instances to test request distribution and high availability.
+- Added Nginx as an external load balancer in front of multiple Gateway instances, experimenting with Round Robin and Least Connections strategies.
+- Integrated Swagger UI (OpenAPI) into the API Gateway to provide a centralized interface for exploring and testing Customer, Product, and Order service APIs through a single entry point.
 
 
-## Saga, Outbox, Kafka
+*Key concepts covered:*
 
-**Saga**
-- Problem: a process spans several services, and one step fails after others already succeeded. `@Transactional` can't roll back across services.
-- Solution: run compensating actions (like a refund) to undo the earlier steps.
+*   *Definition:* An API Gateway acts as a centralized entry point for client requests to a system, sitting between the clients and the internal microservices.
+*   *Core Functions:*
+    *   *Request Routing:* It directs incoming traffic to the appropriate backend services.
+    *   *Authentication:* It validates user identity before allowing access to internal resources.
+    *   *Rate Limiting:* It controls the number of requests a client can make to prevent system overload or abuse.
+*   *Benefits:* By offloading these cross-cutting concerns (like security and traffic management) to a dedicated layer, the internal microservices can focus solely on their specific business logic.
 
-**Outbox**
-- Problem: you save to the DB and publish an event, but one can succeed while the other fails. The event is lost, or it describes something that never happened.
-- Solution: save the event in the same DB transaction as the data, then send it afterwards.
-
-**Kafka**
-- Problem: many consumers need the same events, and you want to avoid coupling, tracking delivery yourself, or losing history.
-- Solution: producers publish once, each consumer tracks its own progress, and events are stored so they can be replayed, with ordering per key.
-
-**Together**
-- Saga coordinates the steps.
-- Outbox makes sure the events are not lost.
-- Kafka delivers them.
+This architectural pattern helps improve *security, **scalability, and **manageability* of large-scale distributed systems.

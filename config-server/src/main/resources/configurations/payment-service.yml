@@ -16,6 +16,10 @@ spring:
   rabbitmq:
     host: rabbitmq
     port: 5672
+    template:
+      observation-enabled: true
+    listener:
+      observation-enabled: true
     username: ${RABBITMQ_USER}
     password: ${RABBITMQ_PASSWORD}
     publisher-confirm-type: correlated     # lets us wait for the broker's confirmation
@@ -31,6 +35,10 @@ spring:
     baseline-on-migrate: true
   kafka:
     bootstrap-servers: kafka:19092
+    template:
+      observation-enabled: true
+    listener:
+      observation-enabled: true
     consumer:
       group-id: payment-service
       auto-offset-reset: earliest        # a new group reads from the first message, not from "now"

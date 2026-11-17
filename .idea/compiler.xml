@@ -12,6 +12,7 @@
         <module name="payment-service" />
         <module name="discovery-service" />
         <module name="notification-service" />
+        <module name="gateway-service" />
       </profile>
       <profile name="Annotation profile for product-service" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
@@ -33,6 +34,7 @@
       <module name="config-server" options="-parameters" />
       <module name="customer-service" options="-parameters" />
       <module name="discovery-service" options="-parameters" />
+      <module name="gateway-service" options="-parameters" />
       <module name="notification-service" options="-parameters" />
       <module name="order-service" options="-parameters" />
       <module name="payment-service" options="-parameters" />

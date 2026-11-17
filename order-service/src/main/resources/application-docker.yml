@@ -1,0 +1,20 @@
+app:
+  instance-id: ${APP_INSTANCE_ID:local}
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${app.instance-id}
+
+management:
+  observations:
+    key-values:
+      instance: ${spring.application.name}:${app.instance-id}
+
+logging:
+  structured:
+    format:
+      console: logstash
+    json:
+      add:
+        service: order-service
