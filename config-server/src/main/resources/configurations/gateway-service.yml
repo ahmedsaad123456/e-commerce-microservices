@@ -4,6 +4,14 @@ server:
 spring:
   reactor:
     context-propagation: auto   # keeps trace context across reactor threads
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # What we EXPECT to find in the "iss" claim. It is only compared as a string.
+          issuer-uri: http://localhost:8180/realms/ecommerce
+          # Where to download the public keys from. Inside docker we reach Keycloak by its container name.
+          jwk-set-uri: http://keycloak:8080/realms/ecommerce/protocol/openid-connect/certs
   data:
     redis:
       host: redis

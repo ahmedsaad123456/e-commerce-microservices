@@ -305,6 +305,7 @@ services:                                 # List of containers to run
       redis:
         condition: service_healthy
 
+
     networks:
       - microservices-net
 

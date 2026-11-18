@@ -1,5 +1,7 @@
 package com.example.order_service.common;
-
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.servers.Server;
@@ -17,8 +19,22 @@ public class OpenApiConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("Order Service API")
-                        .version("v1"))
-                // Use the current browser origin, so Try it out goes through Nginx/Gateway.
-                .addServersItem(new Server().url("/"));
+                        .version("v1")
+                )
+                .addServersItem(new Server()
+                        .url("http://localhost:8222")
+                )
+                .components(new Components()
+                        .addSecuritySchemes(
+                                "bearer-jwt",
+                                new SecurityScheme()
+                                        .type(SecurityScheme.Type.HTTP)
+                                        .scheme("bearer")
+                                        .bearerFormat("JWT")
+                        )
+                )
+                .addSecurityItem(
+                        new SecurityRequirement().addList("bearer-jwt")
+                );
     }
 }
