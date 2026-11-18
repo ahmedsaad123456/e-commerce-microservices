@@ -12,6 +12,7 @@ import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -117,6 +118,12 @@ public class GlobalExceptionHandler {
         }
         log.error("Unexpected error", ex);
         return fail(response, ErrorCode.INTERNAL_ERROR);
+    }
+
+    // Let Spring Security answer with its own 403 handler instead of the catch-all returning 500
+    @ExceptionHandler(AccessDeniedException.class)
+    public void handleAccessDenied(AccessDeniedException ex) {
+        throw ex;
     }
 
 

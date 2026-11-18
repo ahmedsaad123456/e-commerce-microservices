@@ -13,6 +13,14 @@ spring:
     username: payment_user
     password: ${PAYMENT_DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # What we EXPECT to find in the "iss" claim. It is only compared as a string.
+          issuer-uri: http://localhost:8180/realms/ecommerce
+          # Where to download the public keys from. Inside docker we reach Keycloak by its container name.
+          jwk-set-uri: http://keycloak:8080/realms/ecommerce/protocol/openid-connect/certs
   rabbitmq:
     host: rabbitmq
     port: 5672

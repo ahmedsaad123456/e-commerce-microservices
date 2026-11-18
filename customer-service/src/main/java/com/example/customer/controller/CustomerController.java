@@ -8,6 +8,7 @@ import com.example.customer.service.CustomerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -37,12 +38,16 @@ public class CustomerController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<List<CustomerResponse>> findAll() {
         List<CustomerResponse> customers = this.service.findAllCustomers();
         return ApiResponse.ok("Customers retrieved successfully", customers);
     }
 
     @GetMapping("/exists/{customer-id}")
+    @PreAuthorize(
+            "hasAnyRole('ADMIN','SERVICE') or #customerId == authentication.name"
+    )
     public ApiResponse<Boolean> existsById(
             @PathVariable("customer-id") String customerId
     ) {
@@ -51,6 +56,9 @@ public class CustomerController {
     }
 
     @GetMapping("/{customer-id}")
+    @PreAuthorize(
+            "hasAnyRole('ADMIN','SERVICE') or #customerId == authentication.name"
+    )
     public ApiResponse<CustomerResponse> findById(
             @PathVariable("customer-id") String customerId
     ) {

@@ -1,50 +1,38 @@
-# API Gateway Security & CORS Configuration
+# Microservices Security & Role-Based Authorization
 
-- Integrated Spring Security OAuth2 Resource Server into the API Gateway to validate Keycloak Access Tokens.
-- Configured JWT validation using Keycloak's Issuer URI and JWKS endpoint.
-- Implemented custom JSON error responses for `401 Unauthorized` and `403 Forbidden`.
-- Configured public, protected, and restricted Gateway endpoints.
-- Centralized CORS configuration in Spring Security at the API Gateway level.
-- Removed duplicate CORS configurations from Gateway YAML and downstream services.
-- Restricted external access to Actuator endpoints through Nginx.
-- Integrated Bearer JWT authentication into Swagger UI.
-- Tested authentication, endpoint protection, CORS preflight requests, and Authorization Code Flow with PKCE.
+- Enabled Keycloak JWT validation in Customer, Product, Order, and Payment services.
+- Configured Spring Security OAuth2 Resource Server using the Keycloak Issuer URI and JWKS endpoint.
+- Implemented a custom `KeycloakRoleConverter` to map Keycloak realm roles into Spring Security authorities.
+- Configured stateless authentication and centralized JSON error handling for `401 Unauthorized` and `403 Forbidden`.
+- Enabled method-level security using `@EnableMethodSecurity` and `@PreAuthorize`.
+- Restricted sensitive endpoints based on user roles and permissions.
+- Introduced ownership-based authorization to prevent customers from accessing other customers' data.
+- Tested direct service access, JWT validation, and role-based endpoint protection.
 
 ## Important Details
 
-### 1. Gateway as a Resource Server
+### 1. Defense in Depth
+Every microservice validates JWTs independently instead of relying only on the API Gateway. 
+This prevents unauthorized direct access to service endpoints.
 
-The Gateway validates incoming JWTs by checking their signature, expiration, and issuer using Keycloak's public keys (JWKS).
+### 2. KeycloakRoleConverter
+Extracts roles from `realm_access.roles` and converts them into Spring Security authorities, 
+such as `ROLE_CUSTOMER` and `ROLE_ADMIN`.
 
-### 2. Authentication vs. Authorization
+### 3. SecurityConfig
+Configures JWT authentication, stateless sessions, public endpoints, 
+and custom authentication and authorization error handlers.
 
-- `401`: Missing or invalid Access Token.
-- `403`: Authenticated user is not allowed to perform the requested action.
-- `authenticated()`: Requires a valid token.
-- `permitAll()`: Allows access without authentication.
-- `denyAll()`: Always rejects access.
+### 4. Role-Based Authorization
+`@PreAuthorize` protects endpoints based on roles:
+- `hasRole('ADMIN')`: Requires the ADMIN role.
+- `hasRole('CUSTOMER')`: Requires the CUSTOMER role.
+- `hasAnyRole('ADMIN','SERVICE')`: Allows either role.
 
-### 3. CORS (Cross-Origin Resource Sharing)
+### 5. Ownership Authorization
+Uses the authenticated user's Keycloak `sub` claim to identify the user and ensure customers can access only their own resources, 
+while allowing authorized admins or services.
 
-CORS allows specific frontend origins to communicate with the API through the browser.
-
-- `allowedOrigins`: Defines permitted frontend URLs.
-- `allowedMethods`: Defines permitted HTTP methods.
-- `allowedHeaders`: Defines permitted request headers.
-- `exposedHeaders`: Allows frontend JavaScript to read specific response headers.
-- `allowCredentials`: Controls browser credentials such as cookies.
-- `maxAge`: Defines how long the browser can cache preflight results.
-
-### 4. Preflight Requests
-
-Before certain cross-origin requests, the browser sends an `OPTIONS` request to check whether the actual request is allowed.
-
-CORS must be processed before authentication because the preflight request does not contain the Access Token.
-
-### 5. Centralized CORS
-
-CORS is configured only at the Gateway because it is the frontend's entry point. Configuring it again in downstream services may produce duplicate CORS headers and cause browser errors.
-
-### 6. Important Security Consideration
-
-Gateway authentication alone is not sufficient. Every microservice must independently validate JWTs and enforce the appropriate roles and resource ownership rules, especially when services communicate directly through Eureka.
+### 6. HTTP Security Responses
+- `401`: Missing, invalid, or expired token.
+- `403`: Validly authenticated user without the required permission.

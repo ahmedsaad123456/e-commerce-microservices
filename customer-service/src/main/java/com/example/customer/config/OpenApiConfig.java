@@ -1,4 +1,5 @@
-package com.example.order_service.common;
+package com.example.customer.config;
+
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
@@ -18,7 +19,7 @@ public class OpenApiConfig {
 
         return new OpenAPI()
                 .info(new Info()
-                        .title("Order Service API")
+                        .title("Customer Service API")
                         .version("v1")
                 )
                 .addServersItem(new Server()

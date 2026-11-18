@@ -8,6 +8,7 @@ import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.ErrorResponse;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -128,5 +129,11 @@ public class GlobalExceptionHandler {
         log.warn("Dependency unavailable: {}", e.getMessage());
 
         return fail(response, ErrorCode.SERVICE_UNAVAILABLE);
+    }
+
+    // Let Spring Security answer with its own 403 handler instead of the catch-all returning 500
+    @ExceptionHandler(AccessDeniedException.class)
+    public void handleAccessDenied(AccessDeniedException ex) {
+        throw ex;
     }
 }

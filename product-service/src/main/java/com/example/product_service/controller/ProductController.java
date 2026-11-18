@@ -5,6 +5,7 @@ import com.example.product_service.dto.*;
 import com.example.product_service.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,6 +18,7 @@ public class ProductController {
     private final ProductService service;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<ProductResponse> createProduct(@RequestBody @Valid ProductRequest request) {
         return ApiResponse.ok("Product created successfully", service.createProduct(request));
     }
@@ -32,7 +34,8 @@ public class ProductController {
     }
 
     @PutMapping("/{product-id}")
-    public ApiResponse<ProductResponse> updateCustomer(
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<ProductResponse> updateProduct(
             @PathVariable("product-id") Integer productId,
             @RequestBody @Valid ProductRequest request
     ) {
@@ -46,6 +49,7 @@ public class ProductController {
     }
 
     @PostMapping("/purchase")
+    @PreAuthorize("hasRole('SERVICE')")
     public ApiResponse<List<PurchaseResponse>> purchase(@RequestBody @Valid PurchaseRequest request) {
         return ApiResponse.ok("Products purchased successfully", service.purchase(request));
     }

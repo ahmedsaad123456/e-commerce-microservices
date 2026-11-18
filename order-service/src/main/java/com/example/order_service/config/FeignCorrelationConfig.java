@@ -1,4 +1,4 @@
-package com.example.order_service.common;
+package com.example.order_service.config;
 
 
 import feign.RequestInterceptor;

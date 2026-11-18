@@ -1,11 +1,12 @@
-package com.example.payment_service.common;
+package com.example.customer.config;
 
+import com.example.customer.common.Constants;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.MDC;
+import org.slf4j.MDC;                       // NOTE: must be slf4j, not org.jboss.logging
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;

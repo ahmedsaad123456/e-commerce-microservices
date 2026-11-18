@@ -60,7 +60,7 @@ public class GatewaySecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:4200"));   // explicit list, never "*" with real users
+        config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:4200", "http://localhost:8080"));   // explicit list, never "*" with real users
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Correlation-Id"));
         config.setExposedHeaders(List.of("X-Correlation-Id"));   // so browser JS can read it from responses
