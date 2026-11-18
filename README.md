@@ -148,3 +148,22 @@ DevOps & Tools: Docker, Docker Compose, Nginx, MailDev
 API Design: RESTful API Design, Consistent Error Responses, OpenAPI / Swagger
 
 Testing: JUnit 5, Mockito, Testcontainers
+
+## Local URLs
+
+Everything starts with `docker compose up -d`. All the web interfaces below are available on localhost once the containers are healthy.
+
+| # | Tool | URL | What it is for |
+|---|---|---|---|
+| 1 | API entry point and Swagger UI (Nginx → Gateways) | http://localhost:8080/swagger-ui.html | Single entry point for every API call, with the aggregated Swagger UI of all services |
+| 2 | Eureka dashboard | http://localhost:8761 | Registered service instances |
+| 3 | Keycloak admin console | http://localhost:8180 | Realm, clients, roles and users |
+| 4 | Kafka UI | http://localhost:8095 | Topics, messages, consumer groups and dead-letter topics |
+| 5 | RabbitMQ management | http://localhost:15672 | Exchanges, queues, retry queue and DLQ |
+| 6 | MailDev | http://localhost:1080 | Emails sent by the Notification service |
+| 7 | Zipkin | http://localhost:9411 | Distributed traces across services |
+| 8 | Prometheus | http://localhost:9090 | Metrics scraping and targets |
+| 9 | Grafana | http://localhost:3001 | Dashboards (requests, p95 latency, circuit breaker state) |
+| 10 | pgAdmin | http://localhost:5050 | PostgreSQL databases |
+| 11 | Mongo Express | http://localhost: http://localhost:8081  | MongoDB collections (Customer and Notification) |
+| 12 | Redis Commander | http://localhost: http://localhost:8082  | Redis keys (cache and rate limiter) |
