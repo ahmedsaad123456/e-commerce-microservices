@@ -28,10 +28,6 @@ spring:
           jwk-set-uri: http://keycloak:8080/realms/ecommerce/protocol/openid-connect/certs
 
 management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info      # expose only what we need, never "*"
   endpoint:
     health:
       probes:

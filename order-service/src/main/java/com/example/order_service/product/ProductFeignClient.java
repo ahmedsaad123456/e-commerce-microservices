@@ -9,7 +9,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
-@FeignClient(name = "product-service", contextId = "productFeign", path = "/api/v1/products")
+@FeignClient(name = "product-service", contextId = "productFeign", path = "/api/v1/products" , configuration = ProductFeignSecurityConfig.class
+)
 public interface ProductFeignClient {
     @PostMapping("/purchase")
     RemoteResponse<List<PurchaseResponse>> purchase(@RequestBody PurchaseRequest request);

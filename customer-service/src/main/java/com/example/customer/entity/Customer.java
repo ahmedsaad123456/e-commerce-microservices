@@ -24,5 +24,7 @@ public class Customer {
     // Creates a unique index to prevent duplicate email values in the database.
     @Indexed(unique = true)   // Mongo rejects a second document with the same email
     private String email;
+    @Indexed(unique = true)
+    private String keycloakUserId;
     private Address address;
 }

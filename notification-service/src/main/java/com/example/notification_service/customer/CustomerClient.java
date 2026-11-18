@@ -1,6 +1,7 @@
 package com.example.notification_service.customer;
 
 import com.example.notification_service.common.RemoteResponse;
+import com.example.notification_service.common.ServiceTokenProvider;
 import com.example.notification_service.entity.CustomerView;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.core.ParameterizedTypeReference;
@@ -14,14 +15,22 @@ public class CustomerClient {
 
     private final RestClient client;
 
+    private final ServiceTokenProvider tokens;
+
     // Injects the load-balanced builder and configures the Customer Service as the base URL.
-    public CustomerClient(@LoadBalanced RestClient.Builder loadBalanced) {
+    public CustomerClient(@LoadBalanced RestClient.Builder loadBalanced,  ServiceTokenProvider tokens) {
+        this.tokens = tokens;
 
         // Uses the logical service name instead of a fixed IP address or hostname.
         // Eureka resolves "customer-service" to a registered instance,
         // and the load balancer selects an available instance for each request.
         this.client = loadBalanced
                 .baseUrl("http://customer-service")
+                // Runs before EVERY call: attaches "Authorization: Bearer <service token>"
+                .requestInterceptor((request, body, execution) -> {
+                    request.getHeaders().setBearerAuth(this.tokens.getToken());
+                    return execution.execute(request, body);
+                })
                 .build();
     }
 

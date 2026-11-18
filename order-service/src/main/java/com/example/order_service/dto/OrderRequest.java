@@ -9,7 +9,12 @@ import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
 public record OrderRequest(
-        @NotBlank String customerId,
+        String customerId,
         @NotNull PaymentMethod paymentMethod,
-        @NotEmpty List<@Valid OrderLineRequest> lines) {}
+        @NotEmpty List<@Valid OrderLineRequest> lines) {
+    // Returns a copy that carries the id taken from the token
+    public OrderRequest withCustomerId(String customerId) {
+        return new OrderRequest(customerId, this.paymentMethod, this.lines);
+    }
+}
 

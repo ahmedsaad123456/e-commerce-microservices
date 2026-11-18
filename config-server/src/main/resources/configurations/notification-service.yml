@@ -43,3 +43,8 @@ spring:
 notification:
     worker:
       simulated-delay-ms: 0                   # set it to 1000 only for the competing-consumers experiment
+
+keycloak:
+  token-url: http://keycloak:8080/realms/ecommerce/protocol/openid-connect/token
+  client-id: notification-service
+  client-secret: ${NOTIFICATION_CLIENT_SECRET}    # comes from the container environment, never written in git

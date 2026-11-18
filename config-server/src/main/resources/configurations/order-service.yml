@@ -69,10 +69,6 @@ spring:
 
 
 management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,circuitbreakers,circuitbreakerevents
   endpoint:
     health:
       probes:
@@ -132,3 +128,8 @@ resilience4j:
     instances:
       product:
         base-config: default
+
+keycloak:
+  token-url: http://keycloak:8080/realms/ecommerce/protocol/openid-connect/token
+  client-id: order-service
+  client-secret: ${ORDER_CLIENT_SECRET}

@@ -4,6 +4,7 @@ import com.example.customer.common.Constants;
 import com.example.customer.common.ErrorCode;
 import com.example.customer.dto.CustomerRequest;
 import com.example.customer.dto.CustomerResponse;
+import com.example.customer.entity.Customer;
 import com.example.customer.exceptions.AppException;
 import com.example.customer.exceptions.ResourceNotFoundException;
 import com.example.customer.mapper.CustomerMapper;
@@ -21,10 +22,13 @@ public class CustomerService {
     private final CustomerRepository repository;
     private final CustomerMapper mapper;
 
-    public CustomerResponse createCustomer(CustomerRequest request) {
+    public CustomerResponse createCustomer(CustomerRequest request, String keycloakUserId
+    ) {
         try {
-            var customer = repository.save(mapper.toCustomer(request));
-            return mapper.toCustomerResponse(customer);
+            Customer customer = mapper.toCustomer(request);
+            customer.setKeycloakUserId(keycloakUserId);
+            Customer customerEntity = repository.save(customer);
+            return mapper.toCustomerResponse(customerEntity);
         } catch (DuplicateKeyException e) {
             throw new AppException(
                     ErrorCode.CUSTOMER_EMAIL_ALREADY_EXISTS, request.email()
@@ -62,8 +66,15 @@ public class CustomerService {
                 .orElseThrow(() -> new ResourceNotFoundException(Constants.CUSTOMER, id));
     }
 
+    public CustomerResponse findByKeycloakUserId(String keycloakUserId) {
+
+        return repository.findByKeycloakUserId(keycloakUserId)
+                .map(mapper::toCustomerResponse)
+                .orElseThrow(() -> new ResourceNotFoundException(Constants.CUSTOMER, keycloakUserId));
+    }
+
     public boolean existsById(String id) {
-        return repository.existsById(id);
+        return repository.existsByKeycloakUserId(id);
     }
 
     public void deleteCustomer(String id) {

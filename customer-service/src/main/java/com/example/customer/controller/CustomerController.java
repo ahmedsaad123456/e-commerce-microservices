@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,11 +22,28 @@ public class CustomerController {
     private final CustomerService service;
 
     @PostMapping
-    public ApiResponse<CustomerResponse> createCustomer(
-            @RequestBody @Valid CustomerRequest request
+    public ApiResponse<CustomerResponse> create(
+            @Valid @RequestBody CustomerRequest request,
+            Authentication auth
     ) {
-        CustomerResponse result = this.service.createCustomer(request);
-        return ApiResponse.ok("Customer created successfully", result);
+        String keycloakUserId = auth.getName();
+
+        return ApiResponse.ok(
+                service.createCustomer(request, keycloakUserId)
+        );
+    }
+
+    @GetMapping("/by-keycloak-id/{keycloakUserId}")
+    @PreAuthorize(
+            "hasAnyRole('ADMIN', 'SERVICE') or " +
+                    "#keycloakUserId == authentication.name"
+    )
+    public ApiResponse<CustomerResponse> findCustomerByKeycloakUserId(
+            @PathVariable String keycloakUserId
+    ) {
+        return ApiResponse.ok(
+                service.findByKeycloakUserId(keycloakUserId)
+        );
     }
 
     @PutMapping("/{customer-id}")

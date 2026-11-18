@@ -95,7 +95,7 @@ services:                                 # List of containers to run
       ORDER_DB_PASSWORD: ${ORDER_DB_PASSWORD}
       RABBITMQ_USER: ${RABBITMQ_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
-
+      ORDER_CLIENT_SECRET: ${ORDER_CLIENT_SECRET}
       SPRING_PROFILES_ACTIVE: docker
       SPRING_APPLICATION_NAME: order-service
 
@@ -139,7 +139,7 @@ services:                                 # List of containers to run
       ORDER_DB_PASSWORD: ${ORDER_DB_PASSWORD}
       RABBITMQ_USER: ${RABBITMQ_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
-
+      ORDER_CLIENT_SECRET: ${ORDER_CLIENT_SECRET}
       SPRING_PROFILES_ACTIVE: docker
       SPRING_APPLICATION_NAME: order-service
 
@@ -213,8 +213,8 @@ services:                                 # List of containers to run
       MONGO_PASSWORD: ${MONGO_PASSWORD}
       RABBITMQ_USER: ${RABBITMQ_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      NOTIFICATION_CLIENT_SECRET: ${NOTIFICATION_CLIENT_SECRET}
       SPRING_PROFILES_ACTIVE: docker
-
     depends_on: # Startup order
       config-server: # Needs configuration first
         condition: service_healthy        # Wait until the Config Server is healthy
@@ -587,6 +587,39 @@ services:                                 # List of containers to run
     networks:
       - microservices-net
 
+  prometheus:
+    image: prom/prometheus:v3.8.0
+    container_name: prometheus
+
+    ports:
+      - "9090:9090"
+
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
+    networks:
+      - microservices-net
+
+  grafana:
+    image: grafana/grafana:12.3.0
+    container_name: grafana
+
+    ports:
+      - "3001:3000"
+
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+
+    depends_on:
+      - prometheus
+
+    networks:
+      - microservices-net
 
 networks:
   microservices-net:
@@ -600,3 +633,4 @@ volumes:
   kafka-data:
   rabbitmq-data:
   keycloak_data:
+  grafana_data:

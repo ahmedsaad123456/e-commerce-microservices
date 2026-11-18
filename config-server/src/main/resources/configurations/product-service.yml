@@ -49,10 +49,6 @@ spring:
       password: ${REDIS_PASSWORD}
 
 management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
   endpoint:
     health:
       probes:
